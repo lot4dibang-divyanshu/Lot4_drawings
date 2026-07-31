@@ -8,13 +8,6 @@ const app = express();
 // --- SECURITY CHECKPOINT ---
 //Anyone visiting the site MUST pass this test before seeing anything else.
 
-app.use(basicAuth({
-   
-users: { 'Lot-4': 'Dibang' }, // <-- CHANGE THIS PASSWORD
-    challenge: true,
-   unauthorizedResponse: 'Access Denied: Invalid Credentials'
-
-}));
 // ----------------------------
 
 // Serve the frontend files
