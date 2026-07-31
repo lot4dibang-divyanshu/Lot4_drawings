@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const user = document.getElementById('username').value;
         const pass = document.getElementById('password').value;
 
-        if (user === 'admin' && pass === 'Lot4Drawings2026') {
+        if (user === 'divyanshu' && pass === '2880') {
             if (rememberMe.checked) {
                 localStorage.setItem('isLoggedIn', 'true');
             }
