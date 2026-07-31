@@ -78,9 +78,9 @@ document.addEventListener("DOMContentLoaded", async () => {
             card.innerHTML = `
                 <div>
                     <h3>📁 ${folderName}</h3>
-                    <p>${count} Drawing Assemblies</p>
+                    <p>${count} Drawings</p>
                 </div>
-                <div style="margin-top: 15px; font-size: 0.85rem; color: var(--clr-blue); font-weight: 600;">Tap to view drawings →</div>
+                <div style="margin-top: 15px; font-size: 0.85rem; color: var(--clr-blue); font-weight: 600;">View  →</div>
             `;
             card.onclick = () => loadTunnelDrawings(folderName);
             tunnelsGrid.appendChild(card);
