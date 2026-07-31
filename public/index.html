@@ -15,36 +15,40 @@
             <p>Please log in to view project drawings.</p>
             <input type="text" id="username" placeholder="Username">
             <input type="password" id="password" placeholder="Password">
+            <div class="remember-container">
+                <input type="checkbox" id="remember-me">
+                <label for="remember-me">Remember me on this device</label>
+            </div>
             <button id="login-btn">Secure Login</button>
             <p id="login-error" style="color: var(--clr-orange); display: none; margin-top: 10px; font-size: 0.9rem;">Invalid credentials</p>
         </div>
     </div>
 
-    <!-- MAIN APP DASHBOARD (Hidden until logged in) -->
+    <!-- MAIN APP DASHBOARD -->
     <div id="app-container" style="display: none;">
         <header>
             <div class="header-content">
-                <h1>Drawing Management System</h1>
-                <input type="text" id="search-bar" placeholder="Search drawing no, description, or folder...">
+                <div class="header-left">
+                    <button id="home-btn" style="display: none;" title="Back to Tunnels">🏠 Home</button>
+                    <h1>Drawing Management System</h1>
+                </div>
+                <div class="header-right">
+                    <input type="text" id="search-bar" placeholder="Search drawing no, description...">
+                    <button id="offline-btn" title="Download all drawings for offline use">Available Offline</button>
+                </div>
             </div>
         </header>
-        <header>
-    <div class="header-content">
-        <h1>Drawing Management System</h1>
-        <div style="display: flex; gap: 10px; align-items: center;">
-            <input type="text" id="search-bar" placeholder="Search drawing no, description, or folder...">
-            <button id="offline-btn" title="Download all drawings for offline use">Available Offline</button>
-        </div>
-    </div>
-</header>
-        <div class="container">
-            <aside id="sidebar">
-                <h2>Folders</h2>
-                <ul id="folder-list"></ul>
-            </aside>
-            <main>
-                <h2 id="current-folder-title">Select a folder</h2>
-                <div id="drawings-grid" class="grid"></div>
+        <div class="container full-width-container">
+            <!-- Main Content Area handles both the Tunnel Grid and the Drawings Grid -->
+            <main id="main-content-area">
+                <h2 id="view-title">Project Tunnels & Adits</h2>
+                <p id="view-subtitle" style="color: #64748b; margin-top: -10px; margin-bottom: 20px;">Select a tunnel below to view its drawings, or use global search above.</p>
+                
+                <!-- Tunnel Selection Grid -->
+                <div id="tunnels-grid" class="grid"></div>
+
+                <!-- Drawing Cards Grid (Hidden by default until a tunnel is clicked) -->
+                <div id="drawings-grid" class="grid" style="display: none;"></div>
             </main>
         </div>
     </div>
