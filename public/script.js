@@ -1,5 +1,48 @@
 document.addEventListener("DOMContentLoaded", async () => {
-    
+    // --- AVAILABLE OFFLINE BUTTON LOGIC ---
+    const offlineBtn = document.getElementById('offline-btn');
+    if (offlineBtn) {
+        offlineBtn.addEventListener('click', () => {
+            if (!navigator.serviceWorker.controller) {
+                alert("Offline engine is not active yet. Refresh the page and try again.");
+                return;
+            }
+
+            // Gather every single PDF file path from all folders
+            let allFilePaths = [];
+            Object.values(data).forEach(folderDrawings => {
+                folderDrawings.forEach(drawing => {
+                    drawing.revisions.forEach(rev => {
+                        allFilePaths.push(rev.filePath);
+                    });
+                });
+            });
+
+            if (allFilePaths.length === 0) {
+                alert("No drawings found to download.");
+                return;
+            }
+
+            offlineBtn.disabled = true;
+            offlineBtn.textContent = `Downloading (0/${allFilePaths.length})...`;
+
+            // Send the list to the Service Worker
+            navigator.serviceWorker.controller.postMessage({
+                action: 'CACHE_ALL_DRAWINGS',
+                files: allFilePaths
+            });
+        });
+
+        // Listen for progress updates from the Service Worker
+        navigator.serviceWorker.addEventListener('message', (event) => {
+            if (event.data.type === 'PROGRESS') {
+                offlineBtn.textContent = `Downloading (${event.data.current}/${event.data.total})...`;
+            } else if (event.data.type === 'COMPLETE') {
+                offlineBtn.textContent = 'All Offline Ready!';
+                alert("Success! All 500+ drawings have been downloaded and saved for offline use.");
+            }
+        });
+    }
     // --- LOGIN SCREEN LOGIC ---
     const loginBtn = document.getElementById('login-btn');
     const loginScreen = document.getElementById('login-screen');

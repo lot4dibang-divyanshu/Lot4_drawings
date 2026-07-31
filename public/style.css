@@ -202,4 +202,26 @@ main { flex: 1; padding: 2rem; overflow-y: auto; }
         width: 100%;
         box-sizing: border-box;
     }
+}#offline-btn {
+    background-color: var(--clr-cyan);
+    color: var(--clr-slate);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    transition: all 0.3s;
+}
+
+#offline-btn:hover {
+    background-color: var(--clr-blue);
+    color: var(--clr-white);
+}
+
+#offline-btn:disabled {
+    background-color: #cbd5e1;
+    color: #64748b;
+    cursor: not-allowed;
 }
