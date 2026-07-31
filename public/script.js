@@ -184,6 +184,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     renderTunnels();
 
     // --- AVAILABLE OFFLINE BUTTON LOGIC ---
+    // --- SMART AVAILABLE OFFLINE BUTTON LOGIC ---
     const offlineBtn = document.getElementById('offline-btn');
     if (offlineBtn) {
         offlineBtn.addEventListener('click', () => {
@@ -207,20 +208,40 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
 
             offlineBtn.disabled = true;
-            offlineBtn.textContent = `Downloading (0/${allFilePaths.length})...`;
+            offlineBtn.textContent = "Checking for new drawings...";
 
+            // Ask service worker to check which ones are missing
             navigator.serviceWorker.controller.postMessage({
-                action: 'CACHE_ALL_DRAWINGS',
+                action: 'CHECK_MISSING_FILES',
                 files: allFilePaths
             });
         });
 
+        // Handle responses from the Service Worker
         navigator.serviceWorker.addEventListener('message', (event) => {
-            if (event.data.type === 'PROGRESS') {
-                offlineBtn.textContent = `Downloading (${event.data.current}/${event.data.total})...`;
+            if (event.data.type === 'MISSING_FILES_RESULT') {
+                const missing = event.data.missing;
+
+                if (missing.length === 0) {
+                    offlineBtn.textContent = 'All Offline Ready!';
+                    offlineBtn.disabled = false;
+                    alert("Everything is already up to date! No new drawings to download.");
+                    return;
+                }
+
+                // If there are new files, download only those missing ones
+                offlineBtn.textContent = `Downloading 0/${missing.length} new...`;
+                navigator.serviceWorker.controller.postMessage({
+                    action: 'CACHE_SPECIFIC_FILES',
+                    files: missing
+                });
+
+            } else if (event.data.type === 'PROGRESS') {
+                offlineBtn.textContent = `Downloading (${event.data.current}/${event.data.total}) new...`;
             } else if (event.data.type === 'COMPLETE') {
                 offlineBtn.textContent = 'All Offline Ready!';
-                alert("Success! All drawings have been downloaded for offline use.");
+                offlineBtn.disabled = false;
+                alert("Success! Downloaded only the newly added drawings.");
             }
         });
     }
