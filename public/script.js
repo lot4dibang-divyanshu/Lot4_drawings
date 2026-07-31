@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         const pass = document.getElementById('password').value;
 
         // Temporary frontend check (We will wire this to the secure backend later)
-        if (user === 'admin' && pass === 'Lot4Drawings2026') {
+        if (user === 'divyanshu' && pass === '2880') {
             loginScreen.style.opacity = '0';
             setTimeout(() => {
                 loginScreen.style.display = 'none';
