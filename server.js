@@ -48,13 +48,13 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+
+
 // Export app for Vercel serverless environment
 module.exports = app;
 
-// Local development fallback
-if (process.env.NODE_ENV !== 'production') {
-    const PORT = process.env.PORT || 3000;
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    });
-}
+// Start the server (Required for Render and Local)
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+});
