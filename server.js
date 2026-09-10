@@ -4,12 +4,20 @@ const path = require('path');
 
 const app = express();
 
-// Serve static frontend files from public folder
 app.use(express.static(path.join(__dirname, 'public')));
-// Serve your engineering drawings folder statically so PDFs can load
 app.use('/drawings', express.static(path.join(__dirname, 'drawings')));
 
-// API endpoint that scans your subfolders and returns the drawing JSON
+const metadataPath = path.join(__dirname, 'metadata.json');
+let metadata = [];
+if (fs.existsSync(metadataPath)) {
+    metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+}
+
+function getDescription(baseDrawingNo) {
+    const found = metadata.find(m => m["DRAWING No."] === baseDrawingNo);
+    return found ? found["DETAILS OF DRAWING"] : "Description not available";
+}
+
 app.get('/api/drawings', (req, res) => {
     const drawingsDir = path.join(__dirname, 'drawings');
     let data = {};
@@ -22,38 +30,54 @@ app.get('/api/drawings', (req, res) => {
                 const folderName = folder.name;
                 const folderPath = path.join(drawingsDir, folderName);
                 const files = fs.readdirSync(folderPath);
-
-                data[folderName] = [];
+                const folderDrawings = {};
 
                 files.forEach(file => {
                     if (file.toLowerCase().endsWith('.pdf')) {
-                        data[folderName].push({
-                            drawingNo: file.replace('.pdf', ''),
-                            description: `Drawing file: ${file}`,
-                            revisions: [
-                                { rev: "1", filePath: `/drawings/${folderName}/${file}` }
-                            ]
+                        // Matches a dash or underscore, followed by 1 to 3 digits before .pdf
+                        const match = file.match(/^(.*)[-_](\d{1,3})\.pdf$/i);
+                        
+                        let baseDrawingNo, rev;
+                        if (match) {
+                            baseDrawingNo = match[1]; 
+                            rev = match[2];           
+                        } else {
+                            baseDrawingNo = file.replace(/\.pdf$/i, '');
+                            rev = "00";
+                        }
+
+                        if (!folderDrawings[baseDrawingNo]) {
+                            folderDrawings[baseDrawingNo] = {
+                                drawingNo: baseDrawingNo,
+                                description: getDescription(baseDrawingNo),
+                                revisions: []
+                            };
+                        }
+
+                        folderDrawings[baseDrawingNo].revisions.push({
+                            rev: rev,
+                            filePath: `/drawings/${folderName}/${file}`
                         });
                     }
                 });
+
+                Object.values(folderDrawings).forEach(drawing => {
+                    drawing.revisions.sort((a, b) => parseInt(a.rev) - parseInt(b.rev));
+                });
+
+                data[folderName] = Object.values(folderDrawings);
             }
         });
     }
-
     res.json(data);
 });
 
-// Fallback to index.html for frontend routing
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-
-
-// Export app for Vercel serverless environment
 module.exports = app;
 
-// Start the server (Required for Render and Local)
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
