@@ -7,41 +7,38 @@ const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/drawings', express.static(path.join(__dirname, 'drawings')));
 
-// 1. Load Metadata (Checks for metadata.json or metadata_2.json)
-let metadataPath = path.join(__dirname, 'metadata.json');
-if (!fs.existsSync(metadataPath)) {
-    metadataPath = path.join(__dirname, 'metadata_2.json');
-}
-
-let metadata = [];
-if (fs.existsSync(metadataPath)) {
-    try {
-        metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
-    } catch (e) {
-        console.error("Error reading metadata file:", e);
-    }
-}
-
-// 2. Smart Description Finder: Ignores spaces and case mismatches
-function getDescription(baseDrawingNo) {
-    if (!metadata || metadata.length === 0) return "Metadata file missing or empty";
-    
-    // Strip all spaces and uppercase the filename base
-    const normalizedBase = baseDrawingNo.replace(/\s+/g, '').toUpperCase();
-    
-    const found = metadata.find(m => {
-        if (!m["DRAWING No."]) return false;
-        // Strip all spaces and uppercase the metadata drawing number
-        const normalizedMeta = m["DRAWING No."].replace(/\s+/g, '').toUpperCase();
-        return normalizedMeta === normalizedBase;
-    });
-    
-    return found ? found["DETAILS OF DRAWING"] : "Description not available";
+// Helper: Normalize drawing numbers (converts underscores to dashes, removes spaces)
+function normalizeDrawingNo(dNo) {
+    return dNo.replace(/_/g, '-').replace(/\s+/g, '').toUpperCase();
 }
 
 app.get('/api/drawings', (req, res) => {
     const drawingsDir = path.join(__dirname, 'drawings');
     let data = {};
+    
+    // Load metadata from the new "data" subfolder
+    let metadata = [];
+    const metadataPath = path.join(__dirname, 'data', 'metadata.json');
+    
+    if (fs.existsSync(metadataPath)) {
+        try {
+            metadata = JSON.parse(fs.readFileSync(metadataPath, 'utf8'));
+        } catch(e) {
+            console.error("JSON Parse Error:", e);
+        }
+    }
+
+    function getDescription(baseDrawingNo) {
+        if (!metadata || metadata.length === 0) return "Metadata file missing or empty in data/ folder";
+        
+        const normalizedBase = normalizeDrawingNo(baseDrawingNo);
+        const found = metadata.find(m => {
+            if (!m["DRAWING No."]) return false;
+            return normalizeDrawingNo(m["DRAWING No."]) === normalizedBase;
+        });
+        
+        return found ? found["DETAILS OF DRAWING"] : "Description not available";
+    }
 
     if (fs.existsSync(drawingsDir)) {
         const folders = fs.readdirSync(drawingsDir, { withFileTypes: true });
@@ -56,17 +53,20 @@ app.get('/api/drawings', (req, res) => {
 
                 files.forEach(file => {
                     if (file.toLowerCase().endsWith('.pdf')) {
-                        // 3. Smart Regex: Matches EITHER a dash (-) or underscore (_) before the revision digits
-                        const match = file.match(/^(.*)[-_](\d{1,3})\.pdf$/i);
+                        // Regex now captures the revision digits AND any text that comes after it
+                        const match = file.match(/^(.*)[-_]+(\d{2,3}.*)\.pdf$/i);
                         
                         let baseDrawingNo, rev;
                         if (match) {
                             baseDrawingNo = match[1].trim(); 
-                            rev = match[2];           
+                            rev = match[2]; // Captures values like "03_superceded"
                         } else {
                             baseDrawingNo = file.replace(/\.pdf$/i, '').trim();
                             rev = "00";
                         }
+
+                        // Normalize to group underscore files with dash files
+                        baseDrawingNo = normalizeDrawingNo(baseDrawingNo);
 
                         if (!folderDrawings[baseDrawingNo]) {
                             folderDrawings[baseDrawingNo] = {
@@ -83,7 +83,7 @@ app.get('/api/drawings', (req, res) => {
                     }
                 });
 
-                // Sort revisions nicely inside the card
+                // Sort revisions numerically (parseInt safely extracts just the number from "03_superceded")
                 Object.values(folderDrawings).forEach(drawing => {
                     drawing.revisions.sort((a, b) => parseInt(a.rev) - parseInt(b.rev));
                 });
